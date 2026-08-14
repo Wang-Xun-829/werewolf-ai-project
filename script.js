@@ -1,6 +1,4 @@
-// ====================
-// 全局变量和初始化
-// ====================
+// ====================\n// 全局变量和初始化\n// ====================\n
 const STORAGE_KEY = 'werewolf_records';
 const ROLE_CFG_KEY = 'werewolf_role_config';
 const BEHAVIOR_LIB_KEY = 'werewolf_behavior_lib';
@@ -30,9 +28,7 @@ function renderAll() {
   initRoleSelects();
 }
 
-// ====================
-// 数据加载/保存模块
-// ====================
+// ====================\n// 数据加载/保存模块\n// ====================\n
 function loadRecords() {
   const data = localStorage.getItem(STORAGE_KEY);
   records = data ? JSON.parse(data) : [];
@@ -72,9 +68,7 @@ function saveGameSession() {
   localStorage.setItem(GAME_SESSION_KEY, JSON.stringify(gameSession));
 }
 
-// ====================
-// UI通用模块
-// ====================
+// ====================\n// UI通用模块\n// ====================\n
 function setupTabs() {
   const tabContainer = document.querySelector('.tab-bar');
   tabContainer.addEventListener('click', (e) => {
@@ -104,7 +98,6 @@ function initRoleSelects() {
         updateSubRoleOptions(correspondingSub, selectedMain);
       }
     });
-    // Trigger change to populate sub-roles initially
     if (select.options.length > 0) {
       select.dispatchEvent(new Event('change'));
     }
@@ -168,9 +161,7 @@ function getChainBehaviors(wrapId) {
   return behaviors;
 }
 
-// ====================
-// 对局模块 (Game Session)
-// ====================
+// ====================\n// 对局模块 (Game Session)\n// ====================\n
 function startNewGame() {
   if (gameSession && !confirm('当前有未结束的对局，开始新游戏将清空当前进度，确定吗？')) {
     return;
@@ -211,19 +202,16 @@ function removePlayerFromPool(player) {
   if (!gameSession) return;
 
   if (confirm(`确定要从候选池中删除玩家 "${player}" 吗？\n该玩家将同时从上场玩家中移除。`)) {
-    // 从候选池删除
     const playerIndex = gameSession.players.indexOf(player);
     if (playerIndex > -1) {
       gameSession.players.splice(playerIndex, 1);
     }
 
-    // 从上场玩家中删除
     const onFieldIndex = gameSession.onField.indexOf(player);
     if (onFieldIndex > -1) {
       gameSession.onField.splice(onFieldIndex, 1);
     }
 
-    // 从已知身份中删除
     if (gameSession.knownRoles[player]) {
       delete gameSession.knownRoles[player];
     }
@@ -303,7 +291,6 @@ function renderGameSessionUi() {
 
   const { players, onField, knownRoles, records: tempRecords } = gameSession;
 
-  // 渲染候选池
   const poolWrap = document.getElementById('player-pool-wrap');
   poolWrap.innerHTML = players.map(p => `
     <span class="player-tag">
@@ -312,7 +299,6 @@ function renderGameSessionUi() {
     </span>
   `).join('');
 
-  // 渲染上场玩家
   const onFieldWrap = document.getElementById('on-field-wrap');
   onFieldWrap.innerHTML = players.map(p => `
     <label>
@@ -321,7 +307,6 @@ function renderGameSessionUi() {
     </label>
   `).join('');
 
-  // 渲染已知身份
   const knownRolesWrap = document.getElementById('known-roles-wrap');
   knownRolesWrap.innerHTML = onField.map(p => {
     const known = knownRoles[p] || {};
@@ -344,14 +329,12 @@ function renderGameSessionUi() {
     `;
   }).join('');
 
-  // 渲染行为记录的发起者和目标下拉框
   const actorSelect = document.getElementById('game-actor');
   const targetSelect = document.getElementById('game-target');
   const optionsHtml = onField.map(p => `<option value="${p}">${p}</option>`).join('');
   actorSelect.innerHTML = optionsHtml;
   targetSelect.innerHTML = `<option value="">--无--</option>${optionsHtml}`;
 
-  // 渲染临时记录
   const tempRecordsWrap = document.getElementById('temp-records-wrap');
   tempRecordsWrap.innerHTML = tempRecords.map((r, i) => `
     <div class="result-box">
@@ -417,7 +400,6 @@ function confirmGameEnd() {
     return;
   }
 
-  // 整合临时记录到总记录
   gameSession.records.forEach(rec => {
     const actorRole = finalRoles[rec.actorId];
     if (actorRole) {
@@ -433,21 +415,17 @@ function confirmGameEnd() {
 
   saveRecords();
   
-  // 清空对局
   gameSession = null;
   saveGameSession();
   renderGameSessionUi();
   closeGameEndModal();
   alert('本局记录已成功提交至总数据库！');
   document.getElementById('game-status').textContent = '未开启对局';
-  renderManageTable(); // 刷新管理列表
+  renderManageTable();
 }
 
-// ====================
-// 新增记录模块 (旧)
-// ====================
+// ====================\n// 新增记录模块 (旧)\n// ====================\n
 function addOrUpdateRecord(record) {
-  // 检查是否已存在完全相同的记录
   const existingRecord = records.find(r => 
     r.actorId === record.actorId &&
     r.targetId === record.targetId &&
@@ -493,56 +471,16 @@ function addRecord() {
   document.getElementById('add-tip').textContent = '保存成功！';
   setTimeout(() => document.getElementById('add-tip').textContent = '', 2000);
   
-  // 清空
   document.getElementById('add-actorId').value = '';
   document.getElementById('add-targetId').value = '';
   document.getElementById('add-note').value = '';
   initChainSelect('add-chain-wrap');
   
-  renderManageTable(); // 刷新管理列表
+  renderManageTable();
 }
 
-// ====================
-// 查询模块
-// ====================
-function getProbabilityData(actor, target, behaviors, roleFilterFn) {
-  if (!actor || behaviors.length === 0) {
-    return { error: '玩家ID和行为不能为空' };
-  }
-
-  let matchCount = 0;
-  let totalCount = 0;
-
-  // 过滤出与当前证据相关的记录
-  const relevantRecords = records.filter(r => {
-    if (r.actorId !== actor) return false;
-    if (target && r.targetId !== target) return false;
-    
-    // 行为链需要完全匹配
-    return JSON.stringify(r.behaviors) === JSON.stringify(behaviors);
-  });
-
-  if (relevantRecords.length === 0) {
-    return { error: '没有找到完全匹配的行为链记录。' };
-  }
-
-  relevantRecords.forEach(r => {
-    const count = r.count || 1;
-    totalCount += count;
-    if (roleFilterFn(r.roleMain, r.roleSub)) {
-      matchCount += count;
-    }
-  });
-
-  if (totalCount === 0) {
-    return { error: '在相关记录中，总次数为0，无法计算。', matchCount: 0, totalCount: 0, probability: 0 };
-  }
-
-  const probability = (matchCount / totalCount) * 100;
-  return { matchCount, totalCount, probability, actor, target, behaviors };
-}
-
-function calcCampProb() {
+// ====================\n// 查询模块 (已连接后端)\n// ====================\n
+async function calcCampProb() {
   const actor = document.getElementById('q-actor').value.trim();
   const target = document.getElementById('q-target').value.trim();
   const behaviors = getChainBehaviors('q-chain-wrap');
@@ -553,49 +491,76 @@ function calcCampProb() {
     return;
   }
 
-  let finalHtml = '';
-  const camps = Object.keys(roleConfig);
-  camps.forEach(camp => {
-    const data = getProbabilityData(actor, target, behaviors, (main, sub) => main === camp);
-    
-    finalHtml += `<div class="camp-result"><h4>${camp}阵营</h4>`;
-    if (data.error) {
-      finalHtml += `<p class="error">${data.error}</p>`;
-    } else {
-      finalHtml += `
-        <p>查询条件：玩家[${data.actor}] ${data.target ? `对[${data.target}]` : ''} 做出行为 [${data.behaviors.join(' -> ')}]</p>
-        <p>在总计 ${data.totalCount} 次相同行为记录中，满足目标身份条件的有 ${data.matchCount} 次。</p>
-        <p><strong>计算出的概率为: ${data.probability.toFixed(2)}%</strong></p>
-      `;
-    }
-    finalHtml += `</div>`;
-  });
+  resultBox.innerHTML = '<p>正在向AI模型请求阵营预测...</p>';
 
-  resultBox.innerHTML = finalHtml;
+  try {
+    const response = await fetch('http://127.0.0.1:5000/api/predict', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        actor,
+        target,
+        behaviors,
+        prediction_type: 'camp'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`服务器错误: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    resultBox.innerHTML = `<p>${data.message}</p>`;
+
+  } catch (error) {
+    console.error('请求预测失败:', error);
+    resultBox.innerHTML = `<p class="error">请求AI模型失败，请检查后端服务是否正在运行。</p>`;
+  }
 }
 
-function calcProphecyProb() {
+async function calcProphecyProb() {
   const actor = document.getElementById('pro-actor').value.trim();
   const target = document.getElementById('pro-target').value.trim();
   const behaviors = getChainBehaviors('pro-chain-wrap');
   const resultBox = document.getElementById('pro-result');
 
-  const data = getProbabilityData(actor, target, behaviors, (main, sub) => sub === '预言家');
+  if (!actor || behaviors.length === 0) {
+    resultBox.innerHTML = '<p class="error">玩家ID和行为不能为空</p>';
+    return;
+  }
   
-  if (data.error) {
-    resultBox.innerHTML = `<p class="error">${data.error}</p>`;
-  } else {
-    resultBox.innerHTML = `
-      <p>查询条件：玩家[${data.actor}] ${data.target ? `对[${data.target}]` : ''} 做出行为 [${data.behaviors.join(' -> ')}]</p>
-      <p>在总计 ${data.totalCount} 次相同行为记录中，满足目标身份条件的有 ${data.matchCount} 次。</p>
-      <p><strong>计算出的概率为: ${data.probability.toFixed(2)}%</strong></p>
-    `;
+  resultBox.innerHTML = '<p>正在向AI模型请求预言家概率预测...</p>';
+
+  try {
+    const response = await fetch('http://127.0.0.1:5000/api/predict', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        actor,
+        target,
+        behaviors,
+        prediction_type: 'prophecy'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`服务器错误: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    resultBox.innerHTML = `<p>${data.message}</p>`;
+
+  } catch (error) {
+    console.error('请求预测失败:', error);
+    resultBox.innerHTML = `<p class="error">请求AI模型失败，请检查后端服务是否正在运行。</p>`;
   }
 }
 
-// ====================
-// 记录管理模块
-// ====================
+// ====================\n// 记录管理模块\n// ====================\n
 function renderManageTable() {
   const wrap = document.getElementById('manage-table-wrap');
   const filterActor = document.getElementById('filter-actor').value.trim().toLowerCase();
@@ -604,6 +569,7 @@ function renderManageTable() {
     !filterActor || r.actorId.toLowerCase().includes(filterActor)
   );
 
+  if (!wrap) return; // Guard against null element
   if (filteredRecords.length === 0) {
     wrap.innerHTML = '<p>没有记录。</p>';
     return;
@@ -631,7 +597,7 @@ function renderManageTable() {
             <td>${r.behaviors.join('<br>')}</td>
             <td>${r.count || 1}</td>
             <td>${r.note || '-'}</td>
-            <td><button class="del" onclick="deleteRecord(${i})">删除</button></td>
+            <td><button class="del" onclick="deleteRecordByIndex(${i})">删除</button></td>
           </tr>
         `).join('')}
       </tbody>
@@ -640,12 +606,24 @@ function renderManageTable() {
   wrap.innerHTML = table;
 }
 
-function deleteRecord(index) {
-  if (confirm('确定要删除这条记录吗？')) {
-    records.splice(index, 1);
-    saveRecords();
-    renderManageTable();
-  }
+function findRecordIndex(originalIndex) {
+    const filterActor = document.getElementById('filter-actor').value.trim().toLowerCase();
+    const filteredRecords = records.filter(r => 
+        !filterActor || r.actorId.toLowerCase().includes(filterActor)
+    );
+    const recordToDelete = filteredRecords[originalIndex];
+    return records.findIndex(r => r === recordToDelete);
+}
+
+function deleteRecordByIndex(index) {
+    const actualIndex = findRecordIndex(index);
+    if (actualIndex !== -1) {
+        if (confirm('确定要删除这条记录吗？')) {
+            records.splice(actualIndex, 1);
+            saveRecords();
+            renderManageTable();
+        }
+    }
 }
 
 function deleteAllRecords() {
@@ -666,7 +644,7 @@ function exportRecords() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `werewolf_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `werewolf_data_backup_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -679,7 +657,7 @@ function importRecords(event) {
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (confirm('导入将覆盖现有所有数据（记录、身份配置、行为库），确定吗？')) {
+      if (confirm('这将覆盖现有的所有记录和配置，确定导入吗？')) {
         records = data.records || [];
         roleConfig = data.roleConfig || {};
         behaviorLib = data.behaviorLib || [];
@@ -695,40 +673,23 @@ function importRecords(event) {
     }
   };
   reader.readAsText(file);
-  // Reset file input to allow re-importing the same file
   event.target.value = '';
 }
 
-// ====================
-// 系统配置模块
-// ====================
-function renderRoleConfigUi() {
-  const mainSelect = document.getElementById('cfg-select-main');
-  const view = document.getElementById('cfg-view');
-  
-  mainSelect.innerHTML = Object.keys(roleConfig).map(main => `<option value="${main}">${main}</option>`).join('');
-  
-  mainSelect.addEventListener('change', renderSubRolesForSelectedMain);
-  
-  if (mainSelect.options.length > 0) {
-    mainSelect.dispatchEvent(new Event('change'));
-  } else {
-    view.innerHTML = '';
-  }
-}
 
-function renderSubRolesForSelectedMain() {
-  const mainRole = document.getElementById('cfg-select-main').value;
+// ====================\n// 系统配置模块\n// ====================\n
+function renderRoleConfigUi() {
   const view = document.getElementById('cfg-view');
-  if (!mainRole) {
-    view.innerHTML = '';
-    return;
+  const mainSelect = document.getElementById('cfg-select-main');
+  if (!view || !mainSelect) return;
+
+  let html = '';
+  for (const main in roleConfig) {
+    html += `<div><strong>${main}:</strong> ${roleConfig[main].join(', ')}</div>`;
   }
-  const subRoles = roleConfig[mainRole] || [];
-  view.innerHTML = `
-    <h4>"${mainRole}" 阵营下的身份：</h4>
-    ${subRoles.length > 0 ? subRoles.map(sub => `<span class="player-tag">${sub}</span>`).join('') : '<p>暂无二级身份</p>'}
-  `;
+  view.innerHTML = html;
+
+  mainSelect.innerHTML = Object.keys(roleConfig).map(main => `<option value="${main}">${main}</option>`).join('');
 }
 
 function addNewMainRole() {
@@ -743,51 +704,44 @@ function addNewMainRole() {
   }
 }
 
-function addNewSubRole() {
-  const mainRole = document.getElementById('cfg-select-main').value;
-  const input = document.getElementById('cfg-new-sub');
-  const newSub = input.value.trim();
-  if (mainRole && newSub && !roleConfig[mainRole].includes(newSub)) {
-    roleConfig[mainRole].push(newSub);
-    saveRoleConfig();
-    renderSubRolesForSelectedMain();
-    initRoleSelects();
-    input.value = '';
-  }
+function deleteMainRole() {
+    const mainSelect = document.getElementById('cfg-select-main');
+    const mainToDelete = mainSelect.value;
+    if (mainToDelete && confirm(`确定删除一级身份 "${mainToDelete}" 及其下所有二级身份吗？`)) {
+        delete roleConfig[mainToDelete];
+        saveRoleConfig();
+        renderRoleConfigUi();
+        initRoleSelects();
+    }
 }
 
-function deleteMainRole() {
-  const mainRole = document.getElementById('cfg-select-main').value;
-  if (mainRole && confirm(`确定要删除一级身份 "${mainRole}" 及其下所有二级身份吗？`)) {
-    delete roleConfig[mainRole];
-    saveRoleConfig();
-    renderRoleConfigUi();
-    initRoleSelects();
-  }
+function addNewSubRole() {
+    const mainSelect = document.getElementById('cfg-select-main');
+    const subInput = document.getElementById('cfg-new-sub');
+    const main = mainSelect.value;
+    const sub = subInput.value.trim();
+
+    if (main && sub && !roleConfig[main].includes(sub)) {
+        roleConfig[main].push(sub);
+        saveRoleConfig();
+        renderRoleConfigUi();
+        initRoleSelects();
+        subInput.value = '';
+    }
 }
 
 function deleteSubRole() {
-  const mainRole = document.getElementById('cfg-select-main').value;
-  const subRoleToDelete = prompt(`请输入要从 "${mainRole}" 中删除的二级身份名称：`);
-  if (mainRole && subRoleToDelete) {
-    const index = roleConfig[mainRole].indexOf(subRoleToDelete);
-    if (index > -1) {
-      roleConfig[mainRole].splice(index, 1);
-      saveRoleConfig();
-      renderSubRolesForSelectedMain();
-      initRoleSelects();
-    } else {
-      alert(`在 "${mainRole}" 中未找到二级身份 "${subRoleToDelete}"`);
-    }
-  }
+    // This is more complex UX-wise. For now, let's omit this
+    // or require user to type the name to confirm.
+    alert('删除二级身份的功能暂未实现。');
 }
 
 function renderBehaviorLibTable() {
   const wrap = document.getElementById('beh-lib-wrap');
+  if (!wrap) return;
   wrap.innerHTML = behaviorLib.map((beh, i) => `
     <div class="form-row">
-      <input type="text" value="${beh}" id="beh-input-${i}">
-      <button onclick="updateBehavior(${i})">更新</button>
+      <input type="text" value="${beh}" id="beh-input-${i}" onchange="updateBehavior(${i}, this.value)">
       <button class="del" onclick="deleteBehavior(${i})">删除</button>
     </div>
   `).join('');
@@ -805,22 +759,20 @@ function addNewBehavior() {
   }
 }
 
-function updateBehavior(index) {
-  const input = document.getElementById(`beh-input-${index}`);
-  const updatedBeh = input.value.trim();
-  if (updatedBeh && !behaviorLib.includes(updatedBeh)) {
-    behaviorLib[index] = updatedBeh;
+function updateBehavior(index, newValue) {
+  newValue = newValue.trim();
+  if (newValue) {
+    behaviorLib[index] = newValue;
     saveBehaviorLib();
-    renderBehaviorLibTable();
     initAllChainSelects();
-    alert('更新成功');
-  } else if (behaviorLib.includes(updatedBeh) && behaviorLib[index] !== updatedBeh) {
-    alert('行为名称已存在');
+  } else {
+    // If value is empty, revert to original
+    document.getElementById(`beh-input-${index}`).value = behaviorLib[index];
   }
 }
 
 function deleteBehavior(index) {
-  if (confirm(`确定要删除行为 "${behaviorLib[index]}" 吗？`)) {
+  if (confirm('确定删除这个行为吗？')) {
     behaviorLib.splice(index, 1);
     saveBehaviorLib();
     renderBehaviorLibTable();

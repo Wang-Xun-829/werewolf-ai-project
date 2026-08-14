@@ -18,6 +18,7 @@
     <button class="tab-btn" data-tab="tab-config-combined">系统配置</button>
   </div>
 
+  <!-- 对局 -->
   <div id="tab-game" class="tab-content active">
     <h3>实时对局记录</h3>
     <div class="game-controls">
@@ -38,7 +39,7 @@
       </div>
 
       <div class="form-section">
-        <h4>本局上场玩家 <small>(点击候选池玩家进行添加/移除)</small></h4>
+        <h4>本局上场玩家</h4>
         <div id="on-field-wrap"></div>
       </div>
       
@@ -77,6 +78,7 @@
     </div>
   </div>
 
+  <!-- 数据查询 (合并后) -->
   <div id="tab-query-combined" class="tab-content">
     <h3>数据查询</h3>
     
@@ -91,11 +93,9 @@
         <input type="text" id="pro-target">
       </div>
       <div class="form-row">
-        <label>多证据行为选择：</label>
+        <label>行为链：</label>
         <div id="pro-chain-wrap"></div>
-        <button onclick="addChainRow('pro-chain-wrap')">+新增一条行为证据</button>
-        <div id="pro-selected-tags"></div>
-        <small class="note-warn">每一条代表一条独立证据；留空的行自动忽略。</small>
+        <button onclick="addChainRow('pro-chain-wrap')">+新增一条行为</button>
       </div>
       <div>
         <button onclick="calcProphecyProb()">计算预言家概率</button>
@@ -116,11 +116,9 @@
         <input type="text" id="q-target">
       </div>
       <div class="form-row">
-        <label>多证据行为选择：</label>
+        <label>行为链：</label>
         <div id="q-chain-wrap"></div>
-        <button onclick="addChainRow('q-chain-wrap')">+新增一条行为证据</button>
-        <div id="q-selected-tags"></div>
-        <small class="note-warn">每一条代表一条独立证据；留空行自动忽略。</small>
+        <button onclick="addChainRow('q-chain-wrap')">+新增一条行为</button>
       </div>
       <div>
         <button onclick="calcCampProb()">计算阵营概率</button>
@@ -129,6 +127,7 @@
     </div>
   </div>
 
+  <!-- 数据管理 (合并后) -->
   <div id="tab-manage-combined" class="tab-content">
     <h3>数据管理</h3>
 
@@ -179,33 +178,16 @@
     </div>
   </div>
 
+  <!-- 系统配置 (合并后) -->
   <div id="tab-config-combined" class="tab-content">
     <h3>系统配置</h3>
 
     <div class="sub-section">
       <h4>身份配置</h4>
-      <p><small>可以新增一级身份，每个一级身份下维护多个二级身份；配置保存在本地。</small></p>
       <div class="form-row">
         <label>新增一级身份：</label>
         <input id="cfg-new-main" placeholder="例如：第三方">
         <button onclick="addNewMainRole()">添加</button>
-      </div>
-      <div class="form-row">
-        <label>选择一级身份：</label>
-        <select id="cfg-select-main"></select>
-      </div>
-      <div class="form-row">
-        <label>新增二级身份：</label>
-        <input id="cfg-new-sub" placeholder="例如：丘比特">
-        <button onclick="addNewSubRole()">添加到选中一级</button>
-      </div>
-      <div class="form-row">
-        <label>删除一级身份：</label>
-        <button class="del" onclick="deleteMainRole()">删除选中一级</button>
-      </div>
-      <div class="form-row">
-        <label>删除二级身份：</label>
-        <button class="del" onclick="deleteSubRole()">删除选中的二级身份</button>
       </div>
       <div id="cfg-view" class="result-box"></div>
     </div>
@@ -214,13 +196,10 @@
 
     <div class="sub-section">
       <h4>行为库编辑</h4>
-      <p><small>修改/删除仅影响下拉选择框，不会修改历史已经录入的记录。</small></p>
       <div class="form-row">
         <label>新增行为：</label>
-        <div class="flex-row-gap">
-          <input id="beh-new-input" placeholder="输入新行为名称">
-          <button onclick="addNewBehavior()">新增</button>
-        </div>
+        <input id="beh-new-input" placeholder="输入新行为名称">
+        <button onclick="addNewBehavior()">新增</button>
       </div>
       <div id="beh-lib-wrap"></div>
     </div>
