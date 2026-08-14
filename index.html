@@ -1,222 +1,156 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>狼人杀玩家行为记录与分析</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人杀AI数据分析工具</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <h1>狼人杀AI数据分析工具</h1>
 
-<div class="container">
-  <h1>狼人杀玩家行为记录与分析</h1>
-
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="tab-game">对局</button>
-    <button class="tab-btn" data-tab="tab-query-combined">数据查询</button>
-    <button class="tab-btn" data-tab="tab-manage-combined">数据管理</button>
-    <button class="tab-btn" data-tab="tab-config-combined">系统配置</button>
-  </div>
-
-  <!-- 对局 -->
-  <div id="tab-game" class="tab-content active">
-    <h3>实时对局记录</h3>
-    <div class="game-controls">
-      <button onclick="startNewGame()">新游戏开始</button>
-      <button onclick="openGameEndModal()" id="end-game-btn" disabled>结束对局并提交</button>
-      <span id="game-status">未开启对局</span>
-    </div>
-
-    <div id="game-session-ui" class="hidden">
-      <div class="form-section">
-        <h4>候选玩家池</h4>
-        <div class="form-row">
-          <label>添加玩家(多个用;隔开)：</label>
-          <input type="text" id="pool-add-player" placeholder="例如：玩家1;玩家2">
-          <button onclick="addPlayerToPool()">添加到候选池</button>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="tab-game">对局</button>
+            <button class="tab-btn" data-tab="tab-query-combined">数据查询</button>
+            <button class="tab-btn" data-tab="tab-manage-combined">数据管理</button>
+            <button class="tab-btn" data-tab="tab-config-combined">系统配置</button>
         </div>
-        <div id="player-pool-wrap"></div>
-      </div>
 
-      <div class="form-section">
-        <h4>本局上场玩家</h4>
-        <div id="on-field-wrap"></div>
-      </div>
-      
-      <div class="form-section">
-        <h4>已知身份玩家 <small>(若有玩家亮牌或被查验等)</small></h4>
-        <div id="known-roles-wrap"></div>
-      </div>
-
-      <div class="form-section">
-        <h4>新增临时行为记录</h4>
-        <div class="form-row">
-          <label>发起者：</label>
-          <select id="game-actor"></select>
+        <!-- 对局 -->
+        <div id="tab-game" class="tab-content active">
+            <div class="section">
+                <h2>1. 准备玩家</h2>
+                <div class="form-group">
+                    <label for="player-names-input">输入玩家 (用分号 ; 分隔):</label>
+                    <textarea id="player-names-input" rows="3" placeholder="例如: 张三;李四;王五;小明"></textarea>
+                    <button id="load-players-btn">加载/刷新玩家列表</button>
+                </div>
+                <div id="player-selection-area">
+                    <p>请先加载玩家列表。</p>
+                </div>
+            </div>
+            <div class="section">
+                <h2>2. 开始新对局</h2>
+                <div class="form-group">
+                    <label for="player-count">上场玩家人数:</label>
+                    <input type="number" id="player-count" value="12" min="1">
+                    <button id="start-game-btn">开始新对局</button>
+                </div>
+            </div>
+            <div class="section">
+                <h2>当前对局 - 玩家身份设置</h2>
+                <div id="player-setup">
+                    <p>暂无对局进行中。</p>
+                </div>
+            </div>
+            <div class="section">
+                <h2>当前对局 - 行为记录</h2>
+                <div class="form-group">
+                    <input type="text" id="game-actor" placeholder="执行者ID">
+                    <input type="text" id="game-target" placeholder="目标ID (可选)">
+                    <select id="game-behavior"></select>
+                    <button id="add-game-record-btn">添加行为</button>
+                </div>
+                <div id="game-flow">
+                    <p>暂无行为记录。</p>
+                </div>
+            </div>
+            <div class="section">
+                <button id="end-game-btn" class="danger">结束并保存对局</button>
+            </div>
         </div>
-        <div class="form-row">
-          <label>互动对象：</label>
-          <select id="game-target"></select>
+
+        <!-- 数据查询 -->
+        <div id="tab-query-combined" class="tab-content">
+            <div class="section">
+                <h2>阵营概率预测</h2>
+                <div class="form-group">
+                    <input type="text" id="q-actor" placeholder="分析对象ID">
+                    <input type="text" id="q-target" placeholder="相关玩家ID (可选)">
+                </div>
+                <div class="form-group">
+                    <label>行为链:</label>
+                    <select id="q-behavior"></select>
+                    <button id="add-q-behavior-btn">添加行为</button>
+                </div>
+                <div id="q-chain-wrap" class="chain-wrap"></div>
+                <button id="calc-camp-prob-btn">计算阵营概率</button>
+                <div id="q-result" class="result-box"></div>
+            </div>
+            <div class="section">
+                <h2>预言家概率预测</h2>
+                <div class="form-group">
+                    <input type="text" id="pro-actor" placeholder="分析对象ID">
+                    <input type="text" id="pro-target" placeholder="相关玩家ID (可选)">
+                </div>
+                <div class="form-group">
+                    <label>行为链:</label>
+                    <select id="pro-behavior"></select>
+                    <button id="add-pro-behavior-btn">添加行为</button>
+                </div>
+                <div id="pro-chain-wrap" class="chain-wrap"></div>
+                <button id="calc-prophecy-prob-btn">计算预言家概率</button>
+                <div id="pro-result" class="result-box"></div>
+            </div>
         </div>
-        <div class="form-row">
-          <label>行为链：</label>
-          <div id="game-chain-wrap"></div>
-          <button onclick="addChainRow('game-chain-wrap')">+新增一条行为</button>
+
+        <!-- 数据管理 -->
+        <div id="tab-manage-combined" class="tab-content">
+            <div class="section">
+                <h2>数据备份与恢复</h2>
+                <button id="export-data-btn">导出全部数据</button>
+                <button id="import-data-btn">导入数据</button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                <button id="clear-data-btn" class="danger">清空所有数据</button>
+            </div>
+            <div class="section">
+                <h2>历史对局记录</h2>
+                <div id="game-records-list">
+                    <p>暂无历史对局记录。</p>
+                </div>
+            </div>
         </div>
-        <div class="form-row">
-          <label>备注(可选)：</label>
-          <input type="text" id="game-note" placeholder="例如：第一天发言">
+
+        <!-- 系统配置 -->
+        <div id="tab-config-combined" class="tab-content">
+            <div class="section">
+                <h2>角色配置</h2>
+                <div class="config-group">
+                    <h3>好人阵营</h3>
+                    <div id="good-roles" class="tag-container"></div>
+                    <div class="form-group">
+                        <input type="text" id="new-good-role" placeholder="新好人角色">
+                        <button id="add-good-role-btn">添加</button>
+                    </div>
+                </div>
+                <div class="config-group">
+                    <h3>狼人阵营</h3>
+                    <div id="evil-roles" class="tag-container"></div>
+                    <div class="form-group">
+                        <input type="text" id="new-evil-role" placeholder="新狼人角色">
+                        <button id="add-evil-role-btn">添加</button>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>行为库配置</h2>
+                <div id="behavior-lib-list" class="tag-container"></div>
+                <div class="form-group">
+                    <input type="text" id="new-behavior-lib" placeholder="新行为">
+                    <button id="add-behavior-lib-btn">添加</button>
+                </div>
+            </div>
+            <div class="section">
+                <h2>玩家池配置</h2>
+                <div id="player-pool-list" class="tag-container"></div>
+                <div class="form-group">
+                    <input type="text" id="new-player-pool" placeholder="新玩家名称">
+                    <button id="add-player-pool-btn">添加</button>
+                </div>
+            </div>
         </div>
-        <button onclick="addTempRecord()">添加临时记录</button>
-        <p id="game-tip" class="tip"></p>
-      </div>
-
-      <div class="form-section">
-        <h4>本局临时记录</h4>
-        <div id="temp-records-wrap" class="result-box"></div>
-      </div>
     </div>
-  </div>
-
-  <!-- 数据查询 (合并后) -->
-  <div id="tab-query-combined" class="tab-content">
-    <h3>数据查询</h3>
-    
-    <div class="sub-section">
-      <h4>预言家概率查询</h4>
-      <div class="form-row">
-        <label>玩家ID：</label>
-        <input type="text" id="pro-actor">
-      </div>
-      <div class="form-row">
-        <label>互动对象：</label>
-        <input type="text" id="pro-target">
-      </div>
-      <div class="form-row">
-        <label>行为链：</label>
-        <div id="pro-chain-wrap"></div>
-        <button onclick="addChainRow('pro-chain-wrap')">+新增一条行为</button>
-      </div>
-      <div>
-        <button onclick="calcProphecyProb()">计算预言家概率</button>
-      </div>
-      <div class="result-box" id="pro-result"></div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="sub-section">
-      <h4>阵营概率查询</h4>
-      <div class="form-row">
-        <label>玩家ID：</label>
-        <input type="text" id="q-actor">
-      </div>
-      <div class="form-row">
-        <label>互动对象：</label>
-        <input type="text" id="q-target">
-      </div>
-      <div class="form-row">
-        <label>行为链：</label>
-        <div id="q-chain-wrap"></div>
-        <button onclick="addChainRow('q-chain-wrap')">+新增一条行为</button>
-      </div>
-      <div>
-        <button onclick="calcCampProb()">计算阵营概率</button>
-      </div>
-      <div class="result-box" id="q-result"></div>
-    </div>
-  </div>
-
-  <!-- 数据管理 (合并后) -->
-  <div id="tab-manage-combined" class="tab-content">
-    <h3>数据管理</h3>
-
-    <div class="sub-section">
-      <h4>旧版直接新增记录</h4>
-      <p><small>用于补录旧数据，新数据请使用“对局”功能进行记录。</small></p>
-      <div class="form-row">
-        <label>发起者ID：</label>
-        <input type="text" id="add-actorId">
-      </div>
-      <div class="form-row">
-        <label>互动对象ID：</label>
-        <input type="text" id="add-targetId">
-      </div>
-      <div class="form-row">
-        <label>发起者身份：</label>
-        <select id="add-roleMain"></select>
-        <select id="add-roleSub"></select>
-      </div>
-      <div class="form-row">
-        <label>行为链：</label>
-        <div id="add-chain-wrap"></div>
-        <button onclick="addChainRow('add-chain-wrap')">+新增一条行为</button>
-      </div>
-      <div class="form-row">
-        <label>备注(可选)：</label>
-        <input type="text" id="add-note">
-      </div>
-      <button onclick="addRecord()">保存记录</button>
-      <p id="add-tip" class="tip"></p>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="sub-section">
-      <h4>全部记录管理</h4>
-      <div class="form-row">
-        <button onclick="exportRecords()">导出JSON</button>
-        <button onclick="document.getElementById('import-file').click()">导入JSON</button>
-        <input type="file" id="import-file" style="display:none" onchange="importRecords(event)">
-        <button class="del" onclick="deleteAllRecords()">清空所有记录</button>
-      </div>
-      <div class="form-row">
-        <label>筛选玩家ID：</label>
-        <input type="text" id="filter-actor" oninput="renderManageTable()">
-      </div>
-      <div id="manage-table-wrap"></div>
-    </div>
-  </div>
-
-  <!-- 系统配置 (合并后) -->
-  <div id="tab-config-combined" class="tab-content">
-    <h3>系统配置</h3>
-
-    <div class="sub-section">
-      <h4>身份配置</h4>
-      <div class="form-row">
-        <label>新增一级身份：</label>
-        <input id="cfg-new-main" placeholder="例如：第三方">
-        <button onclick="addNewMainRole()">添加</button>
-      </div>
-      <div id="cfg-view" class="result-box"></div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="sub-section">
-      <h4>行为库编辑</h4>
-      <div class="form-row">
-        <label>新增行为：</label>
-        <input id="beh-new-input" placeholder="输入新行为名称">
-        <button onclick="addNewBehavior()">新增</button>
-      </div>
-      <div id="beh-lib-wrap"></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- 结束对局的模态框 -->
-<div id="game-end-modal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" onclick="closeGameEndModal()">&times;</span>
-    <h3>结束对局 - 请确认最终身份</h3>
-    <div id="game-end-form"></div>
-    <button onclick="confirmGameEnd()">确认并提交记录</button>
-  </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
